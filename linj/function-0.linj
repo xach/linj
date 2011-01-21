@@ -1,0 +1,7 @@
+(package linj)
+
+(defclass function-0 ()
+  ())
+
+(defmethod funcall ()
+  (new 'object))

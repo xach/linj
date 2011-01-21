@@ -1,0 +1,7 @@
+(package linj)
+
+(defclass predicate ()
+  ())
+
+(defmethod funcall (arg)
+  t)

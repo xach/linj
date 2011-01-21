@@ -1,0 +1,27 @@
+(package linj)
+
+(defclass future ()
+  ((value)
+   (available :initform nil)))
+
+(defnew (f/function-0)
+  (start
+   (new (class thread
+	       (defmethod run ()
+		 (compute-value this f))))))
+
+(defmethod get-value ((this future))
+  (declare (modifiers :synchronized))
+  (with-slots (available value) this
+    (ignore-errors
+      (while (not available)
+	(wait)))
+    (notify) ;;the future might have been shared (how?)
+    value))
+
+(defmethod compute-value ((this future) f/function-0)
+  (declare (modifiers :synchronized))
+  (with-slots (available value) this
+    (setq value (funcall f))
+    (setq available t)
+    (notify)))

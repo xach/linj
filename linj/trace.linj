@@ -1,0 +1,20 @@
+(package linj)
+
+(defparameter *trace-level* 0)
+
+(defparameter *trace-offset* 2)
+
+(defparameter *max-trace-indentation* 80)
+
+(defun print-level ()
+  (dotimes (i (rem (* *trace-level* *trace-offset*) *max-trace-indentation*))
+    (princ " " *trace-output*))
+  (format *trace-output* "~A: " *trace-level*))
+
+(defun in ()
+  (print-level)
+  (incf *trace-level*))
+
+(defun out ()
+  (decf *trace-level*)
+  (print-level))

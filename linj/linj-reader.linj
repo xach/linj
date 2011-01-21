@@ -1,0 +1,248 @@
+(package linj)
+(import java.io.*)
+(import java.lang.reflect.*)
+(import java.math.*)
+
+;;We want to implement a connection between Linj and real Common Lisp.  The
+;;idea is that Common Lisp can send the printed representation of an object
+;;and Linj wants to read that representation and build a correspondent
+;;object (presumably isomorphic to the printed object in Common Lisp).  The
+;;communication in the other direction might also be needed.
+
+;;The following reader is very strongly inspired by the Silkweb
+;;reader. Thanks, Norvig.
+
+(defclass linj-reader ()
+  ((reader/reader)
+   (buffer :initform (new 'string-buffer))
+   (shared-table :initform (make-hash-table))
+   (shared-syntax :initform nil)
+   (pushed-token)
+   (pushed-char :initform (the int +null-char+))
+   (package :initform "")))
+
+(defconstant +null-char+ #\Space)  ;;we never push a space
+(defconstant +dot+ '|.|)
+(defconstant +dot-comma+ '|;|)
+(defconstant +open-parenthesis+ '|(|)
+(defconstant +close-parenthesis+ '|)|)
+(defconstant +end-of-file+ '|this is the end of file|)
+
+(defnew (in/reader &optional (pkg ""))
+  (setf reader in)
+  (setf package (if (equals pkg "") pkg (concat pkg "."))))
+
+(defmethod push-token (this new-token)
+  (if (eq pushed-token null)
+    (setq pushed-token new-token)
+    (error "Token already pushed!!!")))
+
+(defmethod pop-token (this)
+  (if (eq pushed-token null)
+    (error "No token available to pop!!!")
+    (prog1
+	pushed-token
+      (setq pushed-token null))))
+
+(defmethod pushed-token-p (this)
+  (not (eq pushed-token null)))
+
+(defmethod push-char (this new-char/int)
+  (if (eq pushed-char +null-char+)
+    (setq pushed-char new-char)
+    (error "Char already pushed!!!")))
+
+(defmethod pop-char (this)
+  (if (eq pushed-char +null-char+)
+    (error "No char available to pop!!!")
+    (prog1
+	pushed-char
+      (setq pushed-char +null-char+))))
+
+(defmethod pushed-char-p (this)
+  (not (char= pushed-char +null-char+)))
+
+
+(defmethod read (this &optional (eof-value/object null))
+  (try (let ((token (read-token this)))
+	 (cond ((eq token +close-parenthesis+)
+		(warn "Extra ')' ignored")
+		(read this))
+	       ((eq token +open-parenthesis+)
+		(read-tail this nil))
+	       ((eq token +end-of-file+)
+		eof-value)
+	       (t
+		token)))
+       ((e IOException)
+	(warn "Input error:" e)
+	'())))
+
+(defmethod read-tail (this dot-ok-p/boolean)
+  (let ((token (read-token this)))
+    (cond ((eq token +end-of-file+)
+	   (error 'IOException "End of file during read"))
+	  ((eq token +close-parenthesis+) ;; ()
+	   (list))
+	  ((and (eq token +dot+) dot-ok-p)
+	   (let* ((result (read this))
+		  (new-token (read-token this)))
+	     (if (eq new-token +close-parenthesis+)
+	       result
+	       (error 'IOException (format nil "Where's the ')'? Got ~A instead!" new-token)))))
+	  ((eq token +dot+)
+	   (error 'IOException "'.' immediately after '('"))
+	  (t
+	   (push-token this token)
+	   (let* ((car (read this))
+		  (cdr (read-tail this t)))
+	     (cons car cdr))))))
+
+(defmethod read-token (this)
+  (cond ((pushed-token-p this)
+	 (pop-token this))
+	(t
+ 	 (do ((ch (if (pushed-char-p this) (pop-char this) (read reader))
+		  (read reader)))
+ 	     ((not (whitespace-p this ch))
+	      (case ch
+		(#\( +open-parenthesis+)
+		(#\) +close-parenthesis+)
+		(#\" (read-string this))
+		(#\; (read-comment this)
+		     (read-token this))
+		(#\# (read-dispatch this))
+		(#\' (list 'quote (read this)))
+		(-1 +end-of-file+)
+		(t (read-number-or-symbol this ch))))))))
+
+(defmethod read-dispatch (this)
+  (let ((dispatch (read reader)))
+    (case dispatch
+      (#\S
+       (read-structure this))
+      (#\( ;;vector
+       (let ((elems (read-tail this nil)))
+	 (make-vector-from-list elems)))
+      (t
+       (push-char this dispatch)
+       (setq shared-syntax t)
+       (let ((key (read-token this)))
+	 (let ((term-char (pop-char this)))
+	   (case term-char
+	     ((#\=)
+	      (setq shared-syntax nil)
+	      (let ((shared (read this)))
+		(if (eq (get shared-table key) null)
+		  (put shared-table key shared)
+		  (error "Duplicate read definition name #~A" key))
+		shared))
+	     ((#\#)
+		 (setq shared-syntax nil)
+	       (get shared-table key))
+	     (t (error "Unknown terminating circle dispatch char #~A~A" dispatch term-char)))))))))
+
+(defun make-vector-from-list (elems/cons)
+  (let ((size (length elems)))
+    (let ((array (make-array (list size))))
+      (loop for i upfrom 0
+	    for e in elems
+	    do (setf (aref array i) e))
+      array)))
+
+(defmethod read-string (this) 
+  (set-length buffer 0)
+  (do ((ch (read reader) (read reader)))
+      ((char= ch #\"))
+    (append buffer (the char ch)))
+  (to-string buffer))
+
+(defmethod read-comment (this) 
+  (do ((ch (read reader) (read reader)))
+      ((or (char= ch #\newline)
+	   (char= ch #\return)))))
+
+(defmethod read-number-or-symbol (this ch/int)
+  (let ((c ch))
+    (set-length buffer 0)
+    (loop
+      (append buffer (the char ch))
+      (setq ch (read reader))
+      (when (delimiter-p this ch)
+	(return)))
+    (push-char this ch)
+    (if (and (char= c #\.) (= (length buffer) 1))
+      +dot+
+      (let ((token (to-string buffer)))
+	(if (or (char= c #\.) (char= c #\+) (char= c #\-)
+		(digit-char-p c))
+	  (handler-case
+	   (send (the bignum) value-of token)
+	   (exception ()
+	    (handler-case
+	     (new 'big-decimal token)
+	     (exception ()
+	      (intern token)))))
+	  (intern token))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;A very important improvement is the integration of the Java reflection
+;;capabilities on the linj code.  In particular, we are interested in
+;;allowing, for example, (apply #'new list) to translate to something like
+;;`(parse ,(first list) ,(rest list)).
+
+(defmethod read-structure (this)
+  (parse-structure this (read this)))
+
+(defmethod parse-structure (this struct-descr/cons)
+  (let ((class-name (linj-name-to-java-type-name package (first struct-descr))))
+    (try (let ((class (in (the Class) (for-name class-name))))
+	   ;;(format *trace-output* "Class: ~A~%" class)
+	   ;; HACK!! The following is waiting for funcall to hide reflection
+	   (let ((method (get-method class "parse" (vector (in (the Class) (for-name "linj.Cons"))))))
+	     (set-accessible method t)
+	     ;;(format *trace-output* "Method: ~A~%" method)
+	     (invoke method null (vector struct-descr))))
+	 ((ite invocation-target-exception)
+	  (print-stack-trace (get-target-exception ite))
+	  (error 'IOException (format nil "Couldn't parse the structure #S~A" struct-descr)))
+	 ((e exception)
+	  (format *trace-output* "~A" e)
+	  (print-stack-trace e)
+	  (error 'IOException (format nil "Couldn't parse the structure #S~A" struct-descr))))))
+
+(defun linj-name-to-java-type-name (package/string linj-name/symbol)
+  (let* ((name (to-string linj-name))
+	 (java-name (new 'string-buffer package))
+	 (previous #\-))
+    (dotimes (i (length name))
+      (let ((current (char-at name i)))
+	(unless (char= current #\-)
+	  (append java-name 
+		  (if (char= previous #\-)
+		    (char-upcase current)
+		    current)))
+	(setf previous current)))
+    (to-string java-name)))
+
+(defmethod delimiter-p (this ch/int)
+  (if shared-syntax
+    (case ch
+      ((#\= #\#) t)
+      (t nil))
+    (case ch
+      ((#\( #\) #\' #\" #\Space #\Tab #\Newline #\Return -1) t) ;;-1 for EOF
+      (t nil))))
+
+(defmethod whitespace-p (this ch/int)
+  (case ch
+    ((#\Space #\Tab #\Newline #\Return) t)
+    (t nil)))
+
+
+(defun main ()
+  (let ((r (new 'linj-reader (new 'input-stream-reader *standard-input*))))
+    (loop 
+     (format t "|~A|~%" (read r)))
+;;     (format t "|~A|~%" (read r 'eof))
+    ))

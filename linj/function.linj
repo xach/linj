@@ -1,0 +1,7 @@
+(package linj)
+
+(defclass function ()
+  ())
+
+(defmethod funcall ((f function) arg)
+  arg)

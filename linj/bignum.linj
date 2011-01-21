@@ -1,0 +1,274 @@
+(package linj)
+
+(defclass bignum (comparable number)
+  ((numerator/big-integer :reader numerator :initarg :numerator)
+   (denominator/big-integer :reader denominator :initarg :denominator)))
+
+(defmethod to-string (this)
+  (if (= denominator 1)
+    (format nil "~A" numerator)
+    (format nil "~A/~A" numerator denominator)))
+
+(defmethod to-string (this radix/int)
+  (if (= denominator 1)
+    (format nil "~A" (to-string numerator radix))
+    (format nil "~A/~A" (to-string numerator radix) (to-string denominator radix))))
+
+;;Cache for frequently used values
+
+(defconstant +zero+ (make-instance 'bignum :numerator 0 :denominator 1))
+
+(defconstant +one+ (make-instance 'bignum :numerator 1 :denominator 1))
+
+;;Special constructors
+
+(defun fraction (num/big-integer den/big-integer)
+  (cond ((equals den (numerator +one+))
+	 (cond ((equals num (numerator +zero+))
+		+zero+)
+	       ((equals num (numerator +one+))
+		+one+)
+	       (t
+		(make-instance 'bignum :numerator num :denominator 1))))
+	(t
+	 (let ((signum (signum den)))
+	   (when (= signum 0)
+	     (error "Division by zero")) ;;Hack must improve this to use arithmetic-exception
+	   (when (< signum 0)
+	     (setf num (negate num)
+		   den (negate den)))
+	   (let ((gcd (gcd num den)))
+	     (make-instance 'bignum :numerator (divide num gcd) :denominator (divide den gcd)))))))
+
+(defun value-of (num/big-integer den/big-integer)
+  (fraction num den))
+
+(defun value-of (num/big-integer)
+  (fraction num 1Bigint))
+
+(defun value-of (num/long)
+  (fraction (in (the big-integer) (value-of num)) 1Bigint))
+
+(defun value-of (num/long den/long)
+  (in (the big-integer)
+      (fraction (value-of num) (value-of den))))
+
+(defun value-of (num/string)
+  (let ((idx (index-of num #\/)))
+    (if (< idx 0)
+      (value-of (new 'big-integer num))
+      (fraction (new 'big-integer (substring num 0 idx))
+		(new 'big-integer (substring num (1+ idx)))))))
+
+;;Arithmetical Operations
+
+(defmethod add (this other/bignum)
+  (with-slots ((na numerator) (da denominator)) this
+    (with-slots ((nb numerator) (db denominator)) other
+      (fraction (+ (* na db) (* nb da))
+		(* da db)))))
+
+(defmethod subtract (this other/bignum)
+  (with-slots ((na numerator) (da denominator)) this
+    (with-slots ((nb numerator) (db denominator)) other
+      (fraction (- (* na db) (* nb da))
+		(* da db)))))
+
+(defmethod multiply (this other/bignum)
+  (with-slots ((na numerator) (da denominator)) this
+    (with-slots ((nb numerator) (db denominator)) other
+      (fraction (* na nb)
+		(* da db)))))
+
+(defmethod divide (this other/bignum)
+  (with-slots ((na numerator) (da denominator)) this
+    (with-slots ((nb numerator) (db denominator)) other
+      (fraction (* na db)
+		(* da nb)))))
+
+(defmethod negate (this)
+  (fraction (negate numerator)
+	    denominator))
+
+;;High level operations
+;;This should be called expt but Linj treats every (expt a b) as (pow a b)
+(defmethod pow (this other/long)
+  (let ((base +one+))
+    (dotimes (i other)
+      (setq base (multiply this base)))
+    base))
+
+(defmethod remainder (this other/bignum)
+  (let ((quotient (floor (divide this other))))
+    (subtract this (multiply quotient other))))
+
+(defmethod floor (this)
+  (value-of (divide (numerator this) (denominator this))))
+
+(defmethod floor (this other/bignum)
+  (floor (divide this other)))
+
+(defconstant +one-half+ (make-instance 'bignum :numerator 1 :denominator 2))
+
+(defmethod round (this)
+  (floor (add this +one-half+)))
+
+;;This must be finished:
+;;1 define precision according to the double value
+;;2 solve a bug in the abs below
+;; (defmethod sqrt (this)
+;;   (do ((a (value-of 1) (add a (multiply b this)))
+;;        (b (value-of 1) (add a b)))
+;;       ((< (abs (subtract this
+;; 			 (divide (multiply a a)
+;; 				 (multiply b b))))
+;; 	  (value-of 1 10000000000000))
+;;        (divide a b))))
+
+;;Relational Operations
+
+(defmethod equals (this other/bignum)
+  (and (= (numerator this) (numerator other))
+       (= (denominator this) (denominator other))))
+
+(defmethod equals (this other/object)
+  (or (eq this other)
+      (and (not (null other))
+	   (eq (get-class this) (get-class other))
+	   (let ((other-bignum (the bignum other)))
+	     (and (= (numerator this) (numerator other-bignum))
+		  (= (denominator this) (denominator other-bignum)))))))
+
+(defmethod hash-code (this)
+  (+ (* 37 (hash-code (numerator this)))
+     (hash-code (denominator this))))
+
+(defmethod compare-to (this other/bignum)
+  (let ((num1 (* (numerator this) (denominator other)))
+	(num2 (* (numerator other) (denominator this))))
+    (compare-to num1 num2)))
+
+;;for the Comparable mixin
+(defmethod compare-to (this other/object)
+  (compare-to this (the bignum other)))
+
+;;Logical Operations
+
+(defmethod and (this other/bignum)
+  (assert-is-integer this)
+  (assert-is-integer other)
+  (value-of (send (numerator this) and (numerator other))))
+
+(defmethod or (this other/bignum)
+  (assert-is-integer this)
+  (assert-is-integer other)
+  (value-of (send (numerator this) or (numerator other))))
+
+(defmethod xor (this other/bignum)
+  (assert-is-integer this)
+  (assert-is-integer other)
+  (value-of (send (numerator this) xor (numerator other))))
+
+(defmethod shift-left (this n/int)
+  (assert-is-integer this)
+  (shift-left (numerator this) n))
+
+(defmethod shift-right (this n/int)
+  (assert-is-integer this)
+  (shift-right (numerator this) n))
+
+(defmethod test-bit (this n/int)
+  (assert-is-integer this)
+  (test-bit (numerator this) n))
+
+(defmethod not (this)
+  (assert-is-integer this)
+  (value-of (send (numerator this) not)))
+
+;;Utility
+
+(defmethod abs (this)
+  (if (< numerator 0)
+    (negate this)
+    this))
+
+(defmethod signum (this)
+  (cond ((< numerator 0)
+	 -1)
+	((= numerator 0)
+	 0) 
+	(t
+	 1)))
+
+(defmethod min (this other/bignum)
+  (if (<= (compare-to this other) 0)
+    this
+    other))
+
+(defmethod max (this other/bignum)
+  (if (<= (compare-to this other) 0)
+    other
+    this))
+
+(defmethod assert-is-integer (this)
+  (unless (= denominator 1)
+    (error "The bignum ~A is a rational and can't be converted to integer" this)))
+
+(defmethod byte-value (this)
+  (assert-is-integer this)
+  (byte-value (numerator this)))
+
+(defmethod short-value (this)
+  (assert-is-integer this)
+  (short-value (numerator this)))
+
+(defmethod int-value (this)
+  (assert-is-integer this)
+  (int-value (numerator this)))
+
+(defmethod long-value (this)
+  (assert-is-integer this)
+  (long-value (numerator this)))
+
+(defmethod to-big-decimal (this)
+  (divide (new 'big-decimal (numerator this) 100) ;;One hundred digits should be enough
+	  (new 'big-decimal (denominator this) 100)
+	  (in (the big-decimal) +round-half-up+)))
+
+(defmethod to-big-integer (this)
+  (assert-is-integer this)
+  (numerator this))
+
+(defmethod float-value (this)
+  (float-value (to-big-decimal this)))
+
+(defmethod double-value (this)
+  (double-value (to-big-decimal this)))
+
+(defmethod integerp (this)
+  (= denominator 1))
+
+(defmethod ratiop (this)
+  (/= denominator 1))
+
+
+(defun main ()
+  (let ((x (fraction 1 3))
+	(y (fraction 1 4))
+	(z (send (the bignum) value-of "2/6")))
+    (format t "~A~%" z)
+    (format t "~A + ~A = ~A~%" x x (add x x))
+    (format t "~A - ~A = ~A~%" x x (subtract x x))
+    (format t "~A * ~A = ~A~%" x x (multiply x x))
+    (format t "~A / ~A = ~A~%" x x (divide x x))
+    (format t "~A rem ~A = ~A~%" x y (remainder x y))
+;;    (format t "sqrt(~A) = ~A~%" x (sqrt x))
+    (format t "~A = ~A~%" x (to-big-decimal x))
+    (format t "~A compareTo ~A = ~A~%" x y (compare-to x y))
+    (let ((nums (vector (fraction 1 3) (fraction 1 4) (fraction 1 5) (fraction 1 1) (fraction 1 2))))
+      (for-each (e nums)
+		(print e))
+      (in (the arrays) (sort nums))
+      (for-each (e nums)
+		(print e)))))
+

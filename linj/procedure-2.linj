@@ -1,0 +1,7 @@
+(package linj)
+
+(defclass procedure-2 ()
+  ())
+
+(defmethod funcall (arg1 arg2)
+  )

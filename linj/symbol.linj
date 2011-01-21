@@ -1,0 +1,80 @@
+(package linj)
+
+(defclass symbol ()
+  ((name :type string :initarg :name)
+   (value :type object :accessor symbol-value)
+   (plist :type cons :accessor symbol-plist :initform (list))))
+
+(defconstant +symbols+ (make-hash-table))
+
+(defun intern (name/string)
+  (let ((sym (the symbol (gethash name +symbols+))))
+    (if (eq sym null)
+      (let ((new-sym (make-instance 'symbol :name name)))
+	(setf (gethash name +symbols+) new-sym)
+	new-sym)
+      sym)))
+
+(defun find-symbol (name/string)
+  (the symbol (gethash name +symbols+)))
+
+(defmethod unintern (this)
+  (remhash name +symbols+))
+
+(defmethod copy-symbol (this &optional (copy-props nil))
+  (let ((sym (make-instance 'symbol :name name)))
+    (setf (symbol-value sym) value
+	  (symbol-plist sym) (if copy-props (copy-list plist) plist))))
+
+(defmethod equals (this other/object)
+  (when (stringp other)
+    (error "Probably a semantic error that would go unnoticed if we didn't BARF now!"))
+  (and (typep other 'symbol)
+       (equals name (in (the symbol other) name))))
+
+(defmethod hash-code (this)
+  (hash-code name))
+
+(defmethod to-string (this)
+  name)
+
+(defmethod keywordp (this)
+  (char= (char-at name 0) #\:))
+
+(defmethod symbol-name (this)
+  (if (keywordp this)
+    (substring name 1)
+    name))
+
+(defmethod set (this value)
+  (setf (symbol-value this) value))
+
+(defmethod get (this indicator &optional default)
+  (getf (symbol-plist this) indicator default))
+
+(defmethod (setf get) (value this indicator &optional default)
+  (setf (getf (symbol-plist this) indicator default) value))
+
+(defmethod remprop (this indicator)
+  (remf (symbol-plist this) indicator))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defvar *gensym-counter* 0)
+
+;;Given the fact that gensym has an optional argument that is either a
+;;string or a number it is better to use overloading
+(defun gensym ()
+  (gensym "G"))
+
+(defun gensym (prefix/string)
+  (let ((old *gensym-counter*))
+    (setq *gensym-counter* (1+ old))
+    (make-instance 'symbol
+		   :name (concatenate 'string prefix old))))
+
+(defun gensym (suffix/int)
+  (make-instance 'symbol
+		 :name (concatenate 'string "G" suffix)))
+
+

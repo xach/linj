@@ -1,0 +1,8 @@
+(package linj)
+
+(defclass class-parse-exception (exception)
+  ())
+
+(defnew (message/string)
+    (call-next-method))
+
