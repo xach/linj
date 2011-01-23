@@ -1,6 +1,6 @@
 README for Linj_1.x
 
-Apr, 9, 2004
+January 22, 2011
 
 
 
@@ -11,15 +11,19 @@ Linj is a Common Lisp-like language that tries to be as similar to
 Common Lisp as possible but allowing Linj programs to be compiled into
 human-readable Java code.
 
+Linj was originally created by eValuator, Lda, and this code was last
+updated in 2004. The software is no longer supported or maintained by
+eValuator or António Menezes Leitão. In January, 2011, António Menezes
+Leitão gave Zachary Beane permission to publish the sources under the
+MIT license.
+
 
 
 License
 -------
 
-This Linj distribution is free of charge for non-commercial use. If
-you use Linj for profit, you should contact us and buy a license.
-
-Copyright and ownership of this software belong to eValuator, Lda.
+This Linj distribution is available under the MIT license. See the
+file LICENSE.txt for details.
 
 
 
@@ -35,9 +39,6 @@ The Linj compiler is written in Common Lisp and currently runs on
 You should download the version that matches your working environment.
 
 Linj requires a JDK that conforms to the Java 1.1 Core API.
-
-If you need Linj for other architectures and/or Common Lisp
-environments, please, contact us.
 
 
 
@@ -93,40 +94,18 @@ export CLASSPATH=/home/user/linj1.0/:$CLASSPATH
 Documentation
 -------------
 
-You can find a Linj tutorial at
-http://www.evaluator.pt/downloads/tutorial.html 
+You can find a Linj tutorial in doc/tutorial.pdf.
 
-One (unfinished) manual can be found at
-http://www.evaluator.pt/downloads/linj-manual.pdf
+One (unfinished) manual can be found at doc/linj-manual.pdf
 
 
 
-Bugs
-----
+Feedback & Support
+------------------
 
-If you find bugs in Linj, please, send an e-mail to linj-bugs@evaluator.pt
-describing the bug and, if possible, including the necessary
-information to reproduce the bug.
+Linj is no longer officially supported or maintained and is available
+only on an as-is basis.
 
-
-    
-Inquiry & Support
------------------
-
-If you need more information regarding Linj, please send email to
-info@evaluator.pt.
-
-For technical support, send email to support@evaluator.pt.
-
-
-
-Feedback
---------
-
-Comments are very welcome!  Please send them to info@evaluator.pt.
-
-
-Thanks for using Linj.
 
 -----------------------------------------------------------------------
 "Java" is a registered trademark of Sun Microsystems.
