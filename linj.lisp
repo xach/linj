@@ -3956,6 +3956,12 @@ a return-statement or into a break statement" e))
   (make-instance 'import-declaration
                  :type type))
 
+(def-syntax custom-import (compilation-unit-member)
+  (custom-import (?is ?text stringp)))
+
+(def-unparse custom-import (e)
+  (princ (custom-import-text e)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;in declarations
 
@@ -5176,6 +5182,9 @@ a return-statement or into a break statement" e))
    (imports
     :accessor compilation-unit-imports
     :initform (list))
+   (custom-imports
+    :accessor compilation-unit-custom-imports
+    :initform (list))
    (ins
     :accessor compilation-unit-ins
     :initform (list))
@@ -5195,6 +5204,8 @@ a return-statement or into a break statement" e))
                                 (format nil "~/pp/" import)))))
     (unless (endp imports)
       (format t "~{~/pp/~%~}~%" imports)))
+  (when (compilation-unit-custom-imports e)
+    (format t "~{~/pp/~%~}~%" (compilation-unit-custom-imports e)))
   (format t "~{~/pp/~^~3%~}" (compilation-unit-type-declarations e)))
 
 (defmethod containing-compilation-unit ((e compilation-unit))
@@ -5371,6 +5382,9 @@ a return-statement or into a break statement" e))
                   (error "Unexpected package declaration ~A" form))
                  ((import-declaration-p form)
                   (setf (compilation-unit-imports unit) (nconc (compilation-unit-imports unit) (list form)))
+                  (combine-compilation-unit-forms unit (rest forms) :imports))
+                 ((custom-import-p form)
+                  (setf (compilation-unit-custom-imports unit) (nconc (compilation-unit-custom-imports unit) (list form)))
                   (combine-compilation-unit-forms unit (rest forms) :imports))
                  ((in-declaration-p form)
                   (setf (compilation-unit-ins unit) (nconc (compilation-unit-ins unit) (list form)))

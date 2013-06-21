@@ -1,4 +1,5 @@
 (package linj)
+(custom-import "import static java.lang.Math.PI;")
 
 (defun string-capitalize (string/string &key (start 0) (end (length string)))
   (let ((newstring (new 'string-buffer string)))
