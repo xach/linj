@@ -7,15 +7,15 @@
 (defnew (f/function-0)
   (start
    (new (class thread
-	       (defmethod run ()
-		 (compute-value this f))))))
+               (defmethod run ()
+                 (compute-value this f))))))
 
 (defmethod get-value ((this future))
   (declare (modifiers :synchronized))
   (with-slots (available value) this
     (ignore-errors
       (while (not available)
-	(wait)))
+        (wait)))
     (notify) ;;the future might have been shared (how?)
     value))
 

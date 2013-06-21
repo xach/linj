@@ -1,3 +1,14 @@
+NOTE: After cloning the repo, you might want to invoke
+"sbcl --script scripts/relinj.lisp" to compile the supporting
+classes in linj/ defined in Linj itself to Java.
+
+The resulting Java files (but not their compilation to class files)
+are actually checked into the repo. Currently, by invoking relinj.lisp
+no changes to them should be visible.
+
+
+
+
 README for Linj_1.x
 
 January 22, 2011
@@ -87,7 +98,7 @@ are just reading.  As an example, if your Linj distribution is on the
 path "/home/user/linj_1.0/" then you should set your CLASSPATH as
 follows:
 
-export CLASSPATH=/home/user/linj1.0/:$CLASSPATH 
+export CLASSPATH=/home/user/linj1.0/:$CLASSPATH
 
 
 

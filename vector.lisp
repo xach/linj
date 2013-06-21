@@ -29,7 +29,7 @@
   (with-new-names (i)
     `(dotimes (,i (vector-length ,?expr) . ,?result)
        (let ((,?var (aref ,?expr ,i)))
-	 . ,?body))))
+         . ,?body))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -45,16 +45,16 @@
 
 (def-macro-transform array-type-reference (array ?type ?dim)
   (cond ((numberp ?dim)
-	 `(array ,?type ,(make-list ?dim :initial-element '*)))
-	((consp ?dim)
-	 nil);;`(array ,?type ,?dim))
-	(t
-	 (error "Unrecognized dimension in array type specifier ~A" ?dim))))
+         `(array ,?type ,(make-list ?dim :initial-element '*)))
+        ((consp ?dim)
+         nil);;`(array ,?type ,?dim))
+        (t
+         (error "Unrecognized dimension in array type specifier ~A" ?dim))))
 
 (def-macro-transform array-type-reference (array ?type (?ignore . ?dims))
   (if (endp ?dims)
-    `(array-type ,(if (eq ?type '*) 'object ?type))
-    `(array-type (array ,?type ,?dims))))
+      `(array-type ,(if (eq ?type '*) 'object ?type))
+      `(array-type (array ,?type ,?dims))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -63,6 +63,6 @@
 
 (def-macro make-string (size &key (initial-element nil) (element-type ''char))
   `(new 'java.lang.string (make-array (list ,size)
-			   :element-type ,element-type
-			   ,@(when initial-element `
-				   (:initial-element ,initial-element)))))
+                                      :element-type ,element-type
+                                      ,@(when initial-element `
+                                          (:initial-element ,initial-element)))))

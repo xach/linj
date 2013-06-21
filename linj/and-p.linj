@@ -3,7 +3,7 @@
 (defclass and-p (predicate)
   ((p1/predicate)
    (p2/predicate)))
-  
+
 (defmethod funcall (obj)
   (and (funcall p1 obj)
        (funcall p2 obj)))

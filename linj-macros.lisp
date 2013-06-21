@@ -30,16 +30,16 @@
 
 (def-macro-transform nil (typecase (?is ?expr atom) . ?clauses)
   `(cond ,@(mapcar #'(lambda (clause)
-		       (if (member (first clause) '(t otherwise))
-			 clause
-			 `((typep ,?expr ',(first clause))
-			   ,@(rest clause))))
-		   ?clauses)))
+                       (if (member (first clause) '(t otherwise))
+                           clause
+                           `((typep ,?expr ',(first clause))
+                             ,@(rest clause))))
+                   ?clauses)))
 
 (def-macro-transform statement (typecase (?is ?expr consp) . ?clauses)
   (with-new-names (type-expr)
-		  `(let ((,type-expr ,?expr))
-		     (typecase ,type-expr . ,?clauses))))
+    `(let ((,type-expr ,?expr))
+       (typecase ,type-expr . ,?clauses))))
 
 (def-macro-transform nil (etypecase ?expr . ?clauses)
   `(typecase ,?expr
@@ -50,14 +50,14 @@
   (assert (listp places))
   `(unless ,test
      (error 'runtime-exception
-      (format nil
-       ,(or datum-form (format nil "The assertion ~A failed." test))
-       ,@argument-forms))))
+            (format nil
+                    ,(or datum-form (format nil "The assertion ~A failed." test))
+                    ,@argument-forms))))
 
 (def-macro time (expr)
   `(let ((start-time (in (the system) (current-time-millis))))
-    ,expr
-    (let ((end-time (in (the system) (current-time-millis))))
-      (format *trace-output*
-	      "The evaluation took ~A milliseconds~%"
-	      (- end-time start-time)))))
+     ,expr
+     (let ((end-time (in (the system) (current-time-millis))))
+       (format *trace-output*
+               "The evaluation took ~A milliseconds~%"
+               (- end-time start-time)))))

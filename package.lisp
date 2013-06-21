@@ -18,21 +18,21 @@
 (in-package "CL-USER")
 
 (defpackage "LINJ"
-   (:use "COMMON-LISP")
-   (:export "LINJ2JAVA" 
-	    "LINJ2JAVA-DIRECTORY"
-	    "WITH-LINJ-SYNTAX"
-	    "*LINJ-READTABLE*"
-	    ;;These are necessary so that format can use them without package concerns
-	    "UNLINJ-NAME"
-	    "UNLINJ-TYPE"
-	    "PP"
-	    "PPEXP"
-	    "PPMULTIARGS"
-	    "PPSTM"
-	    "PPBLK"
-	    "PPINIT"
-	    "WRITE-OPTIONS"))
+  (:use "COMMON-LISP")
+  (:export "LINJ2JAVA"
+           "LINJ2JAVA-DIRECTORY"
+           "WITH-LINJ-SYNTAX"
+           "*LINJ-READTABLE*"
+           ;;These are necessary so that format can use them without package concerns
+           "UNLINJ-NAME"
+           "UNLINJ-TYPE"
+           "PP"
+           "PPEXP"
+           "PPMULTIARGS"
+           "PPSTM"
+           "PPBLK"
+           "PPINIT"
+           "WRITE-OPTIONS"))
 
 ;;Import symbols into COMMON-LISP-USER
 (eval-when (:load-toplevel)
