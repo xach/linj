@@ -80,7 +80,5 @@
   (princ obj stream))
 
 (defmacro defconst (symbol value &optional doc)
-  `(defconstant ,symbol (if (boundp ',symbol)
-                            (symbol-value ',symbol)
-                            ,value)
+  `(defparameter ,symbol ,value
      ,@(when doc (list doc))))
