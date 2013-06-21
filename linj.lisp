@@ -5541,6 +5541,7 @@ a return-statement or into a break statement" e))
         (with-open-file (f location :direction :output :if-exists :supersede)
           (format *trace-output* "(Re)Writing file ~a~%" location)
           (write-compilation-unit-to-stream unit f)
+          (fresh-line f)
           name)))))
 
 (defmethod write-compilation-unit-to-stream (unit stream)
