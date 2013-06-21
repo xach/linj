@@ -53,8 +53,8 @@
 
 (def-macro-transform expression (list . ?args)
   (if (<= (length ?args) 5)
-    `(key-send (the linj.cons) list . ,?args)
-    `(cons ,(first ?args) (list . ,(rest ?args)))))
+      `(key-send (the linj.cons) list . ,?args)
+      `(cons ,(first ?args) (list . ,(rest ?args)))))
 
 (def-transform expression (null ?obj) (not ?obj))
 
@@ -81,46 +81,46 @@
 
 (def-macro-transform statement (push ?obj (gethash ?key ?table ?default))
   (cond ((and (atom ?key)
-	      (atom ?table))
-	 `(if (contains-key (real-the java.util.hashtable ,?table) ,?key)
-	   (setf (gethash ,?key ,?table)
-	    (cons ,?obj (gethash ,?key ,?table)))
-	   (setf (gethash ,?key ,?table)
-	    (cons ,?obj ,?default))))
-	((atom ?key)
-	 `(let ((table ,?table))
-	   (push ,?obj (gethash ,?key table ,?default))))
-	(t
-	 `(let ((key ,?key))
-	   (push ,?obj (gethash key ,?table ,?default))))))
+              (atom ?table))
+         `(if (contains-key (real-the java.util.hashtable ,?table) ,?key)
+              (setf (gethash ,?key ,?table)
+                    (cons ,?obj (gethash ,?key ,?table)))
+              (setf (gethash ,?key ,?table)
+                    (cons ,?obj ,?default))))
+        ((atom ?key)
+         `(let ((table ,?table))
+            (push ,?obj (gethash ,?key table ,?default))))
+        (t
+         `(let ((key ,?key))
+            (push ,?obj (gethash key ,?table ,?default))))))
 
 ;;We also need this to be parsable as expression (bc the Java API also implements such method)
 (add-expression-word 'push)
 (def-linj-macro statement (push ?obj/expression ?place/expression)
   (if (or (cons-type-p (get-type ?place)) (object-type-p (get-type ?place)))
-    `(setf ,(ast-node-form ?place) (cons ,?obj ,?place))
-    (fail)))
+      `(setf ,(ast-node-form ?place) (cons ,?obj ,?place))
+      (fail)))
 
 ;;We also need this to be parsable as expression (bc the Java API also implements such method)
 (add-expression-word 'pop)
 (def-linj-macro statement (pop ?place/expression)
   (if (cons-type-p (get-type ?place))
       (if (reference-p ?place)
-	  `(prog1
-	    (first ,?place)
-	    (setf ,(ast-node-form ?place) (rest ,?place)))
-	  (linj-error "Can't deal with such pop expression ~A" ?place))
-    (fail)))
+          `(prog1
+               (first ,?place)
+             (setf ,(ast-node-form ?place) (rest ,?place)))
+          (linj-error "Can't deal with such pop expression ~A" ?place))
+      (fail)))
 
 (def-macro-transform statement (doplist (?props-vals ?list) . ?body)
   `(do ((plist ,?list (rest (rest plist))))
        ((endp plist)) ;;HACK: Should use this scheme to other forms (dolist, doassoc, etc)
      (let ,(mapcar #'(lambda (var selector)
-		       (if (consp var) ;;With type
-			 `(,(first var) (the ,(second var) (,selector plist)))
-			 `(,var (,selector plist))))
-	    ?props-vals
-	    '(first second third fourth fifth))
+                       (if (consp var) ;;With type
+                           `(,(first var) (the ,(second var) (,selector plist)))
+                           `(,var (,selector plist))))
+                   ?props-vals
+                   '(first second third fourth fifth))
        ,@?body)))
 
 (def-transform statement (doassoc ((?prop ?val) ?list . ?result-forms) . ?body)
@@ -128,16 +128,16 @@
       ((endp the-assoc) . ?result-forms)
     (let ((pair (the cons (first the-assoc))))
       (let ((?prop (car pair))
-	    (?val (cdr pair)))
-	. ?body))))
+            (?val (cdr pair)))
+        . ?body))))
 
 (def-macro-transform for-statement (dolist2 (?var1 ?expr1 ?var2 ?expr2 . ?result-forms) . ?body)
   (with-new-names (list1 list2)
     `(do ((,list1 ,?expr1 (rest ,list1))
-	  (,list2 ,?expr2 (rest ,list2)))
-	 ((endp ,list1) . ,?result-forms)
+          (,list2 ,?expr2 (rest ,list2)))
+         ((endp ,list1) . ,?result-forms)
        (let ((,?var1 (first ,list1))
-	     (,?var2 (first ,list2))) . ,?body))))
+             (,?var2 (first ,list2))) . ,?body))))
 
 (def-real-the-form setf-car t linj.cons)
 (def-real-the-form setf-cdr t linj.cons)
@@ -190,10 +190,10 @@
   `(def-macro-transform expression (,name ?arg1 ?arg2 ?arg3 . ?args)
      (let ((args (list* ?arg1 ?arg2 ?arg3 ?args)))
        (reduce #'(lambda (arg1 arg2)
-		   `(,',name ,arg1 ,arg2))
-	       (rest args)
-	       :initial-value (first args)
-	       :from-end t))))
+                   `(,',name ,arg1 ,arg2))
+               (rest args)
+               :initial-value (first args)
+               :from-end t))))
 
 (generalize-to-multi-arguments append)
 (generalize-to-multi-arguments nconc)

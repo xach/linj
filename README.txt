@@ -87,7 +87,7 @@ are just reading.  As an example, if your Linj distribution is on the
 path "/home/user/linj_1.0/" then you should set your CLASSPATH as
 follows:
 
-export CLASSPATH=/home/user/linj1.0/:$CLASSPATH 
+export CLASSPATH=/home/user/linj1.0/:$CLASSPATH
 
 
 

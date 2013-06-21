@@ -27,8 +27,8 @@
 
 (defmacro match-force-match ((pat dat) &body body)
   `(match (,(car pat) (car ,dat))
-    (or (match (,(cdr pat) (cdr ,dat)) ,@body)
-     (error "Wrong form for ~A: ~A" ',(car pat) ,dat))))
+     (or (match (,(cdr pat) (cdr ,dat)) ,@body)
+         (error "Wrong form for ~A: ~A" ',(car pat) ,dat))))
 
 
 ;;Now, the def-rule macro
@@ -39,7 +39,7 @@
      :category ',category
      :pattern ',label
      :function #'(lambda ,args
-		   ,@body))
+                   ,@body))
     ,phase))
 
 ;;;To iterate lists doing something in-between
@@ -48,17 +48,17 @@
   `(let ((first t))
      (dolist (,var ,list)
        (if first
-	 (setq first nil)
-	 ,separator)
+           (setq first nil)
+           ,separator)
        ,@body)))
 
 (defmacro dolist-2 (((key val) list &optional result) &body body)
   (let ((l (gensym)))
     `(do ((,l ,list (cddr ,l)))
-	 ((null ,l) ,result)
+         ((null ,l) ,result)
        (let ((,key (car ,l))
-	     (,val (cadr ,l)))
-	 ,@body))))
+             (,val (cadr ,l)))
+         ,@body))))
 
 (defparameter *debug-level* nil)
 
@@ -66,21 +66,21 @@
 (defmacro def-unparse (type (arg) &body body)
   (let ((stream (gensym)))
     `(progn
-      (defmethod print-object ((,arg ,type) ,stream)
-	(format ,stream "~W" (ast-node-form ,arg))
-	(case *debug-level*
-	  (0 (format ,stream ":~A" (type-of ,arg)))
-	  (1 (when (null (ast-node-parent ,arg))
-	       (format ,stream "[NO PARENT]")))))
-      (defmethod unparse-object ((,arg ,type) ,stream)
-	(let ((*standard-output* ,stream))
-	  ,@body)))))
+       (defmethod print-object ((,arg ,type) ,stream)
+         (format ,stream "~W" (ast-node-form ,arg))
+         (case *debug-level*
+           (0 (format ,stream ":~A" (type-of ,arg)))
+           (1 (when (null (ast-node-parent ,arg))
+                (format ,stream "[NO PARENT]")))))
+       (defmethod unparse-object ((,arg ,type) ,stream)
+         (let ((*standard-output* ,stream))
+           ,@body)))))
 
 (defmethod unparse-object ((obj t) stream)
   (princ obj stream))
 
 (defmacro defconst (symbol value &optional doc)
   `(defconstant ,symbol (if (boundp ',symbol)
-			  (symbol-value ',symbol)
-			  ,value)
+                            (symbol-value ',symbol)
+                            ,value)
      ,@(when doc (list doc))))

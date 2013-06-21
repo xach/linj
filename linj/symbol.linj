@@ -11,8 +11,8 @@
   (let ((sym (the symbol (gethash name +symbols+))))
     (if (eq sym null)
       (let ((new-sym (make-instance 'symbol :name name)))
-	(setf (gethash name +symbols+) new-sym)
-	new-sym)
+        (setf (gethash name +symbols+) new-sym)
+        new-sym)
       sym)))
 
 (defun find-symbol (name/string)
@@ -24,7 +24,7 @@
 (defmethod copy-symbol (this &optional (copy-props nil))
   (let ((sym (make-instance 'symbol :name name)))
     (setf (symbol-value sym) value
-	  (symbol-plist sym) (if copy-props (copy-list plist) plist))))
+          (symbol-plist sym) (if copy-props (copy-list plist) plist))))
 
 (defmethod equals (this other/object)
   (when (stringp other)
@@ -71,10 +71,8 @@
   (let ((old *gensym-counter*))
     (setq *gensym-counter* (1+ old))
     (make-instance 'symbol
-		   :name (concatenate 'string prefix old))))
+                   :name (concatenate 'string prefix old))))
 
 (defun gensym (suffix/int)
   (make-instance 'symbol
-		 :name (concatenate 'string "G" suffix)))
-
-
+                 :name (concatenate 'string "G" suffix)))

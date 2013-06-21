@@ -41,17 +41,17 @@
 
 (defparameter *server-dir-path*
   (let ((classpath (get-env "CLASSPATH"))
-	(file-dir (namestring
-		   (make-pathname :host (pathname-host *load-truename*)
-				  :device (pathname-device *load-truename*)
-				  :directory (pathname-directory *load-truename*)))))
+        (file-dir (namestring
+                   (make-pathname :host (pathname-host *load-truename*)
+                                  :device (pathname-device *load-truename*)
+                                  :directory (pathname-directory *load-truename*)))))
     (if classpath
-      (concatenate 'string
-		   file-dir
-		   #+(and allegro mswindows) ";"
-		   #-(and allegro mswindows) ":"
-		   classpath)
-      file-dir)))
+        (concatenate 'string
+                     file-dir
+                     #+(and allegro mswindows) ";"
+                     #-(and allegro mswindows) ":"
+                     classpath)
+        file-dir)))
 
 (defun create-server-process ()
   (make-server-process))
@@ -60,73 +60,73 @@
   (unless (server-process-stream process)
     #+cmu
     (let ((proc (ext:run-program "java" `("-classpath" ,*server-dir-path* "JavaToLMI")
-				 :input :stream
-				 :output :stream
-				 :error *trace-output*
-				 :wait nil)))
+                                 :input :stream
+                                 :output :stream
+                                 :error *trace-output*
+                                 :wait nil)))
       (unless proc
-	(error "Couldn't start Java process.  Is J2SDK properly installed?"))
+        (error "Couldn't start Java process.  Is J2SDK properly installed?"))
       (setf (server-process-process process) proc)
       (setf (server-process-stream process)
-	    (make-two-way-stream (ext:process-output proc)
-				 (ext:process-input proc))))
+            (make-two-way-stream (ext:process-output proc)
+                                 (ext:process-input proc))))
 
     #+openmcl
     (let ((proc (ccl:run-program "java" `("-classpath" ,*server-dir-path* "JavaToLMI")
-				 :input :stream
-				 :output :stream
-				 :error *trace-output*
-				 :wait nil)))
+                                 :input :stream
+                                 :output :stream
+                                 :error *trace-output*
+                                 :wait nil)))
       (unless proc
         (error "Couldn't start Java process.  Is J2SDK properly installed?"))
       (setf (server-process-process process) proc)
       (setf (server-process-stream process)
             (make-two-way-stream (ccl:external-process-output-stream proc)
                                  (ccl:external-process-input-stream proc))))
-    
+
     #+clisp
     (let ((proc-stream
-	   (ext:run-program "java"
-			    :arguments `("-classpath" ,*server-dir-path* "JavaToLMI")
-			    :input :stream
-			    :output :stream
-			    :wait t)))
+            (ext:run-program "java"
+                             :arguments `("-classpath" ,*server-dir-path* "JavaToLMI")
+                             :input :stream
+                             :output :stream
+                             :wait t)))
       (setf (server-process-stream process) proc-stream))
 
     #+sbcl
     (let ((proc (sb-ext:run-program "java" `("-classpath" ,*server-dir-path* "JavaToLMI")
-				    :search t
-				    :input :stream
-				    :output :stream
-				    :error *trace-output*
-				    :wait nil)))
+                                    :search t
+                                    :input :stream
+                                    :output :stream
+                                    :error *trace-output*
+                                    :wait nil)))
       (unless proc
-	(error "Couldn't start Java process.  Is J2SDK properly installed?"))
+        (error "Couldn't start Java process.  Is J2SDK properly installed?"))
       (setf (server-process-process process) proc)
       (setf (server-process-stream process)
-	    (make-two-way-stream (sb-ext:process-output proc)
-				 (sb-ext:process-input proc))))
-    
+            (make-two-way-stream (sb-ext:process-output proc)
+                                 (sb-ext:process-input proc))))
+
     #+allegro
     (multiple-value-bind (proc-stream err-stream)
-	#+mswindows (excl:run-shell-command (format nil "java -classpath ~S JavaToLMI" *server-dir-path*)
-					    :input :stream
-					    :output :stream
-					    :wait nil
-					    :show-window :hide)
-	#-mswindows (excl:run-shell-command `#("java" "java" "-classpath" ,*server-dir-path* "JavaToLMI")
-					    :input :stream
-					    :output :stream
-					    ;;:error-output *trace-output* slime changes this stream
-					    :wait nil)
+        #+mswindows (excl:run-shell-command (format nil "java -classpath ~S JavaToLMI" *server-dir-path*)
+                                            :input :stream
+                                            :output :stream
+                                            :wait nil
+                                            :show-window :hide)
+      #-mswindows (excl:run-shell-command `#("java" "java" "-classpath" ,*server-dir-path* "JavaToLMI")
+                                          :input :stream
+                                          :output :stream
+                                          ;;:error-output *trace-output* slime changes this stream
+                                          :wait nil)
       (declare (ignore err-stream))
       (setf (server-process-stream process) proc-stream))
 
     #+lispworks
     (let ((proc-stream
-	   (sys::open-pipe (format nil "java -classpath ~A JavaToLMI" *server-dir-path*)
-			   :direction :io
-			   :buffered nil)))
+            (sys::open-pipe (format nil "java -classpath ~A JavaToLMI" *server-dir-path*)
+                            :direction :io
+                            :buffered nil)))
       (setf (server-process-stream process) proc-stream)))
   (server-process-stream process))
 
@@ -136,13 +136,13 @@
   #+openmcl (ccl:signal-external-process (server-process-process process) 9)
   #+allegro (system:os-wait)
   (setf (server-process-stream process) nil))
-  
+
 
 (defun ask-server (process what)
   (handler-case (let ((proc-stream (get-server-process-stream process)))
-		  (format proc-stream "~a~%" what)
-		  (force-output proc-stream)
-		  (read proc-stream))
-    (error (e) 
+                  (format proc-stream "~a~%" what)
+                  (force-output proc-stream)
+                  (read proc-stream))
+    (error (e)
       (warn "~&The server got an error ~A." e)
       (kill-server-process process))))

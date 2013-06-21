@@ -25,7 +25,7 @@
 ;;Example: (primitive-type "int").
 ;;There are two types of references types: class-or-interface types and
 ;;array-types.  Array types have the syntax (array-type type) where type is
-;;another type (primitive or reference).  Class or Interface types are of the form 
+;;another type (primitive or reference).  Class or Interface types are of the form
 ;;(class-or-interface-type package name), where package is a list of strings and name is a string.
 ;;Example: (class-or-interface-type (java lang) Vector)
 ;;A more complex example is:
@@ -49,8 +49,8 @@
   (let ((read-char (read-char stream nil char)))
     (assert (funcall test read-char))
     (if (char= read-char char)
-      ()
-      (cons read-char (read-until-char stream char test)))))
+        ()
+        (cons read-char (read-until-char stream char test)))))
 
 (defun read-string-until-char (stream char &optional (test #'identity))
   (coerce (read-until-char stream char test) 'string))
@@ -58,9 +58,9 @@
 (defun split-at-char (string char)
   (let ((pos (position char string)))
     (if (null pos)
-      (list string)
-      (cons (subseq string 0 pos)
-	    (split-at-char (subseq string (1+ pos)) char)))))
+        (list string)
+        (cons (subseq string 0 pos)
+              (split-at-char (subseq string (1+ pos)) char)))))
 
 (defun parse-dots (descr)
   (split-at-char descr #\.))
@@ -95,28 +95,28 @@
 (defun parse-java-type (descr)
   (let ((array-pos (position #\[ descr :from-end t)))
     (if array-pos
-      `(array-type ,(parse-java-type (subseq descr 0 array-pos)))
-      (let ((sub-descrs (mapcar #'read-from-string (parse-dots descr))))
-	(let ((name (first (last sub-descrs)))
-	      (pkg (butlast sub-descrs)))
-	  (let ((prim (member name *primitive-types-description*
-			      :test #'eq
-			      :key #'second)))
-	    (if prim
-	      (if (not (null pkg)) ;;this could be an error, but it allows
-		;;a convention where, e.g., <java.lang.long> represents
-		;;<java.lang.Long>, while <long> is just the primitive type
-		`(class-or-interface-type 
-		  ,pkg
-		  ,name)
-		(first prim))
-	      `(class-or-interface-type
-		,(if (null pkg)
-		     (if *infer-unknown-packages*
-		       (unknown-package)
-		       (empty-package))
-		     pkg)
-		,name))))))))
+        `(array-type ,(parse-java-type (subseq descr 0 array-pos)))
+        (let ((sub-descrs (mapcar #'read-from-string (parse-dots descr))))
+          (let ((name (first (last sub-descrs)))
+                (pkg (butlast sub-descrs)))
+            (let ((prim (member name *primitive-types-description*
+                                :test #'eq
+                                :key #'second)))
+              (if prim
+                  (if (not (null pkg)) ;;this could be an error, but it allows
+                      ;;a convention where, e.g., <java.lang.long> represents
+                      ;;<java.lang.Long>, while <long> is just the primitive type
+                      `(class-or-interface-type
+                        ,pkg
+                        ,name)
+                      (first prim))
+                  `(class-or-interface-type
+                    ,(if (null pkg)
+                         (if *infer-unknown-packages*
+                             (unknown-package)
+                             (empty-package))
+                         pkg)
+                    ,name))))))))
 
 ;;Java to linj names:
 
@@ -124,44 +124,44 @@
   (or (alphanumericp char)
       (member char '(#\_ #\. #\$) :test #'char=)))
 
-; (defun java-mixed-case-to-linj-name (java-name)
-;   (coerce 
-;    (cons (char-upcase (char java-name 0))
-; 	 (loop 
-; 	   :for i :from 1 :below (length java-name)
-; 	   :for ch := (char java-name i)
-; 	   :for previous-ch := (char java-name (1- i))
-; 	   :if (and (alphanumericp previous-ch)
-; 		    (or (upper-case-p ch)
-; 			(digit-char-p ch)))
-; 	   :collect #\- :and :collect ch
-; 	   :else :if (valid-in-java-name-p ch) :collect (char-upcase ch)
-; 	   :else :do (error "unknown char '~a' in java name" ch)))
-;    'string))
+                                        ; (defun java-mixed-case-to-linj-name (java-name)
+                                        ;   (coerce
+                                        ;    (cons (char-upcase (char java-name 0))
+                                        ;        (loop
+                                        ;          :for i :from 1 :below (length java-name)
+                                        ;          :for ch := (char java-name i)
+                                        ;          :for previous-ch := (char java-name (1- i))
+                                        ;          :if (and (alphanumericp previous-ch)
+                                        ;                   (or (upper-case-p ch)
+                                        ;                       (digit-char-p ch)))
+                                        ;          :collect #\- :and :collect ch
+                                        ;          :else :if (valid-in-java-name-p ch) :collect (char-upcase ch)
+                                        ;          :else :do (error "unknown char '~a' in java name" ch)))
+                                        ;    'string))
 
 (defun java-mixed-case-to-linj-name (java-name)
-  (coerce 
+  (coerce
    (let ((new-chars (list (char-downcase (char java-name 0)))))
      (dotimes (i (1- (length java-name)) (nreverse new-chars))
        (let ((previous-ch (char java-name i))
-	     (ch (char java-name (1+ i))))
-	 (cond ((and (alphanumericp previous-ch)
-		     (or (upper-case-p ch)
-			 (digit-char-p ch)))
-		(push #\- new-chars)
-		(push (char-downcase ch) new-chars))
-	       ((valid-in-java-name-p ch)
-		(push (char-downcase ch) new-chars))
-	       (t 
-		(error "unknown char '~a' in java name" ch))))))
+             (ch (char java-name (1+ i))))
+         (cond ((and (alphanumericp previous-ch)
+                     (or (upper-case-p ch)
+                         (digit-char-p ch)))
+                (push #\- new-chars)
+                (push (char-downcase ch) new-chars))
+               ((valid-in-java-name-p ch)
+                (push (char-downcase ch) new-chars))
+               (t
+                (error "unknown char '~a' in java name" ch))))))
    'string))
 
 (defun java-name-to-linj-name-string (java-name)
   (if (and (some #'upper-case-p java-name)
-	   (some #'lower-case-p java-name))
-    (java-mixed-case-to-linj-name java-name)
-    ;; else all upper or lower possibly with #\_
-    (substitute #\- #\_ (string-downcase java-name))))
+           (some #'lower-case-p java-name))
+      (java-mixed-case-to-linj-name java-name)
+      ;; else all upper or lower possibly with #\_
+      (substitute #\- #\_ (string-downcase java-name))))
 
 (defun linj-name-to-linj-file-name (name)
   (princ-to-string name))
@@ -177,11 +177,11 @@
   (let ((*readtable* *linj-type-readtable*))
     (let ((token (read stream t nil t)))
       (if (symbolp token)
-	(let ((str (princ-to-string token)))
-	  (if (potential-java-type-token str)
-	    (parse-java-type (subseq str 1 (1- (length str))))
-	    token))
-	token))))
+          (let ((str (princ-to-string token)))
+            (if (potential-java-type-token str)
+                (parse-java-type (subseq str 1 (1- (length str))))
+                token))
+          token))))
 
 (defparameter *linj-readtable* (copy-readtable *linj-type-readtable*))
 
@@ -191,20 +191,20 @@
 
 (defun parse (form &optional (+category nil))
   (with-linj-syntax ()
-      (or (try-to-parse form +category)
-	  (error "Couldn't parse form ~S in +category ~A"
-		 form +category))))
+    (or (try-to-parse form +category)
+        (error "Couldn't parse form ~S in +category ~A"
+               form +category))))
 
 (defun potential-java-type-token (tok)
   (and (char= (char tok 0) #\<)
        (let ((last-pos (1- (length tok))))
-	 (and (char= (char tok last-pos) #\>)
-	      (do ((i 1 (1+ i)))
-		  ((= i last-pos) t)
-		(let ((char (char tok i)))
-		  (unless (or (alphanumericp char)
-			      (member char '(#\- #\_ #\. #\$ #\[ #\] #\/) :test #'char=))
-		    (return nil))))))))
+         (and (char= (char tok last-pos) #\>)
+              (do ((i 1 (1+ i)))
+                  ((= i last-pos) t)
+                (let ((char (char tok i)))
+                  (unless (or (alphanumericp char)
+                              (member char '(#\- #\_ #\. #\$ #\[ #\] #\/) :test #'char=))
+                    (return nil))))))))
 
 ;;Regarding primitive types, we need some extra operations: easy naming,
 ;;easy recognizing and promotion:
@@ -214,20 +214,20 @@
 (defmacro define-type-expansion (name form)
   (let ((parameter-name (conc-symbol '* name '-type-description*)))
     (let ((constructor-name (conc-symbol name '-type-description))
-	  (recognizer-name (conc-symbol name '-type-description-p)))
+          (recognizer-name (conc-symbol name '-type-description-p)))
       `(progn
-	 (defvar ,parameter-name ',form)
-	 (defun ,constructor-name ()
-	   ,parameter-name)
-	 (defun ,recognizer-name (obj)
-	   (or (eq obj ,parameter-name) ;;We use eq bc the reader uniquify primitive types
-	       (equal obj ,parameter-name)))
-	 (defun ,(conc-symbol name '-type) ()
-	   (parse ,parameter-name 'type-reference))
-	 (defun ,(conc-symbol name '-type-p) (obj)
-	   (equal-type-p obj (parse ,parameter-name 'type-reference)))
-;;;	   (,recognizer-name (ast-node-form obj)))
-	 ',parameter-name))))
+         (defvar ,parameter-name ',form)
+         (defun ,constructor-name ()
+           ,parameter-name)
+         (defun ,recognizer-name (obj)
+           (or (eq obj ,parameter-name) ;;We use eq bc the reader uniquify primitive types
+               (equal obj ,parameter-name)))
+         (defun ,(conc-symbol name '-type) ()
+           (parse ,parameter-name 'type-reference))
+         (defun ,(conc-symbol name '-type-p) (obj)
+           (equal-type-p obj (parse ,parameter-name 'type-reference)))
+;;;        (,recognizer-name (ast-node-form obj)))
+         ',parameter-name))))
 
 
 ;;Every symbol of the form <name> is a type name

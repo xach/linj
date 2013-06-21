@@ -64,7 +64,7 @@ public class LinjReader extends Object {
         try {
             Object token = readToken();
             if (token == CLOSE_PARENTHESIS) {
-System.err.print("Extra ')' ignored");
+                System.err.print("Extra ')' ignored");
                 return read(null);
             } else if (token == OPEN_PARENTHESIS) {
                 return readTail(false);
