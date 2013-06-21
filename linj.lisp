@@ -5274,7 +5274,7 @@ a return-statement or into a break statement" e))
   (setf (gethash (compilation-unit-location unit) *compilation-units*)
         unit))
 
-(defparameter *always-load-p* nil)
+(defvar *always-load-p* nil)
 
 (defun get-loaded-compilation-unit (location)
   (and (not *always-load-p*)
