@@ -88,5 +88,3 @@
 
 (def-transform expression (char-digit ?c) (send (the java.lang.character) digit (real-the char ?c) 10))
 (def-transform expression (digit-char ?d) (send (the java.lang.character) for-digit (real-the char ?d) 10))
-
-

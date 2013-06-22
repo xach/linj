@@ -120,24 +120,24 @@
 (def-macro-transform nil (with-slots ?slots ?instance . ?body)
   ;;adapt to avoid multiple evaluation
   (if (symbolp ?instance)
-    `(let-macro-transform
-      ,(mapcar #'(lambda (slot)
-		   (multiple-value-bind (var-name slot-name)
-		       (if (consp slot) (values-list slot) (values slot slot))
-		     `(expression ,var-name `(slot-value ,',?instance ',',slot-name))))
-	       ?slots)
-      (progn ,@?body))
-    ;;HACK: this should be improved to pick better names
-    (let ((name (conc-symbol (first ?instance) '- (second ?instance))))
-      `(let ((,name ,?instance))
-	 (let-macro-transform 
-	  ,(mapcar #'(lambda (slot)
-		       (multiple-value-bind (var-name slot-name)
-			   (if (consp slot) (values-list slot) (values slot slot))
-			 `(expression ,var-name `(slot-value ,',?instance ',',slot-name))))
-		   ?slots)
-	  ?slots)
-	 (progn ,@?body)))))
+      `(let-macro-transform
+        ,(mapcar #'(lambda (slot)
+                     (multiple-value-bind (var-name slot-name)
+                         (if (consp slot) (values-list slot) (values slot slot))
+                       `(expression ,var-name `(slot-value ,',?instance ',',slot-name))))
+                 ?slots)
+        (progn ,@?body))
+      ;;HACK: this should be improved to pick better names
+      (let ((name (conc-symbol (first ?instance) '- (second ?instance))))
+        `(let ((,name ,?instance))
+           (let-macro-transform
+            ,(mapcar #'(lambda (slot)
+                         (multiple-value-bind (var-name slot-name)
+                             (if (consp slot) (values-list slot) (values slot slot))
+                           `(expression ,var-name `(slot-value ,',?instance ',',slot-name))))
+                     ?slots)
+            ?slots)
+           (progn ,@?body)))))
 
 ;;Random states
 
@@ -146,55 +146,55 @@
 
 (def-linj-macro expression (random ?limit/expression)
   `(the ,(copy-type (get-type ?limit))
-     (* (send (the java.lang.Math) random) ,?limit)))
+        (* (send (the java.lang.Math) random) ,?limit)))
 
 (def-linj-macro expression (random ?limit/expression ?state/expression)
   (let ((type (get-type ?limit)))
-  `(the ,(copy-type type)
-     (* (send ,?state
-	      ,(cond ((int-type-p type) 'next-int)
-		     ((long-type-p type) 'next-long)
-		     ((float-type-p type) 'next-float)
-		     (t 'next-double)))
-	,?limit))))
+    `(the ,(copy-type type)
+          (* (send ,?state
+                   ,(cond ((int-type-p type) 'next-int)
+                          ((long-type-p type) 'next-long)
+                          ((float-type-p type) 'next-float)
+                          (t 'next-double)))
+             ,?limit))))
 
 ;; String operations
 
 (def-linj-macro expression (position ?item/expression ?sequence/expression . ?options)
   (let ((type (get-type ?sequence)))
     (if (or (string-type-p type)
-	    (equal-type-p type (parse 'java.util.Vector 'type-reference)))
-      ;;Could also add LinkedList but Linj's cons is better
-      (destructuring-bind (&key from-end test test-not start end key)
-	  ?options
-	(let ((oper (if from-end 'last-index-of 'index-of)))
-	  (assert (not (or test test-not key (if from-end start end))))
-	  `(,oper ,?sequence ,?item
-		 ,@(if from-end
-		     (and end (list (if (numberp end) (1- end) `(1- ,end))))
-		     (and start (list start))))))
-      (fail))))
+            (equal-type-p type (parse 'java.util.Vector 'type-reference)))
+        ;;Could also add LinkedList but Linj's cons is better
+        (destructuring-bind (&key from-end test test-not start end key)
+            ?options
+          (let ((oper (if from-end 'last-index-of 'index-of)))
+            (assert (not (or test test-not key (if from-end start end))))
+            `(,oper ,?sequence ,?item
+                    ,@(if from-end
+                          (and end (list (if (numberp end) (1- end) `(1- ,end))))
+                          (and start (list start))))))
+        (fail))))
 
 (def-linj-macro expression (search ?item/expression ?sequence/expression . ?options)
   (if (string-type-p (get-type ?sequence))
-    (destructuring-bind (&key from-end test test-not key start1 start2 end1 end2)
-	?options
-      (let ((oper (if from-end 'last-index-of 'index-of)))
-	(assert (not (or test test-not key start1 end1 (if from-end start2 end2))))
-	`(send ,?sequence ,oper ,?item
-	       ,@(if from-end
-		   (and end2 (list (if (numberp end2) (1- end2) `(1- ,end2))))
-		   (and start2 (list start2))))))
-    (fail)))
+      (destructuring-bind (&key from-end test test-not key start1 start2 end1 end2)
+          ?options
+        (let ((oper (if from-end 'last-index-of 'index-of)))
+          (assert (not (or test test-not key start1 end1 (if from-end start2 end2))))
+          `(send ,?sequence ,oper ,?item
+                 ,@(if from-end
+                       (and end2 (list (if (numberp end2) (1- end2) `(1- ,end2))))
+                       (and start2 (list start2))))))
+      (fail)))
 
 ;; Iterate trough java.util.Vector
 
 (def-macro-transform statement
-  (do-dynamic-vector (?var (?is ?vector symbolp)) . ?body)
+    (do-dynamic-vector (?var (?is ?vector symbolp)) . ?body)
   (let ((i (gen-iter)))
     `(dotimes (,i (size ,?vector))
        (let ((,?var (element-at ,?vector ,i)))
-	 ,@?body))))
+         ,@?body))))
 
 (def-transform expression (stringp ?obj)
   (typep ?obj 'java.lang.string))
@@ -222,8 +222,8 @@
   (assert (atom ?key))
   (assert (atom ?table))
   `(if (contains-key (real-the java.util.hashtable ,?table) ,?key)
-     (get (real-the java.util.hashtable ,?table) ,?key)
-     ,?default))
+       (get (real-the java.util.hashtable ,?table) ,?key)
+       ,?default))
 
 (def-transform setf-expression (setf-gethash ?value ?key ?table . ?ignore) (put (real-the java.util.hashtable ?table) ?key ?value))
 
@@ -257,14 +257,14 @@
 
 (def-linj-macro expression (integerp ?obj/expression)
   (if (bignum-type-p (get-type ?obj))
-    (fail)
-    (progn
-      (assert (atom (ast-node-form ?obj)))
-      `(or (typep ,?obj 'java.lang.integer)
-	   (typep ,?obj 'java.lang.Long)
-	   (and (typep ,?obj 'linj.bignum) (integerp (the linj.bignum ,?obj)))
-	   (typep ,?obj 'java.math.big-integer)))))
-  
+      (fail)
+      (progn
+        (assert (atom (ast-node-form ?obj)))
+        `(or (typep ,?obj 'java.lang.integer)
+             (typep ,?obj 'java.lang.Long)
+             (and (typep ,?obj 'linj.bignum) (integerp (the linj.bignum ,?obj)))
+             (typep ,?obj 'java.math.big-integer)))))
+
 (def-macro-transform expression (rationalp ?obj)
   (assert (atom ?obj))
   `(or (typep ,?obj 'java.lang.integer)
@@ -322,15 +322,15 @@
 (def-linj-macro expression (string ?arg/expression)
   (let ((type (get-type ?arg)))
     (cond ((string-type-p type)
-	   ?arg)
-	  ((symbol-type-p type)
-	   `(send ,?arg symbol-name))
-	  ((char-type-p type)
-	   (if (literal-p ?arg)
-	     (string (literal-value ?arg))
-	     `(send (the string) value-of ,?arg)))
-	  (t
-	   `(send (the string) value-of ,?arg)))))
+           ?arg)
+          ((symbol-type-p type)
+           `(send ,?arg symbol-name))
+          ((char-type-p type)
+           (if (literal-p ?arg)
+               (string (literal-value ?arg))
+               `(send (the string) value-of ,?arg)))
+          (t
+           `(send (the string) value-of ,?arg)))))
 
 (def-transform expression
     (princ-to-string ?obj)
@@ -343,17 +343,17 @@
 (defun build-string-expression (string start end)
   (let ((string `(real-the java.lang.string ,string)))
     (values (if (and start (numberp start) (> start 0))
-	      `(send ,string substring 0 ,start)
-	      nil)
-	    (cond (end
-		   `(send ,string substring ,(or start 0) ,end))
-		  (start
-		   `(send ,string substring ,start))
-		  (t
-		   string))
-	    (if end
-	      `(send ,string substring ,end)
-	      nil))))
+                `(send ,string substring 0 ,start)
+                nil)
+            (cond (end
+                   `(send ,string substring ,(or start 0) ,end))
+                  (start
+                   `(send ,string substring ,start))
+                  (t
+                   string))
+            (if end
+                `(send ,string substring ,end)
+                nil))))
 
 
 
@@ -363,8 +363,8 @@
     (when (or (and start middle) (and middle end))
       (assert (symbolp string))) ;;to avoid multiple evaluation
     `(concat ,@(and start (list start))
-	     (send ,middle ,case)
-	     ,@(and end (list end)))))
+             (send ,middle ,case)
+             ,@(and end (list end)))))
 
 
 (def-macro string-upcase (string &key start end)
@@ -375,10 +375,10 @@
 
 (def-macro string-capitalize (string &key start end)
   `(key-send (the linj.util)
-	     string-capitalize
-	     ,string
-	     ,@(when start (list :start start))
-	     ,@(when end (list :end end))))
+             string-capitalize
+             ,string
+             ,@(when start (list :start start))
+             ,@(when end (list :end end))))
 
 (def-macro-transform expression (string-trim ?character-bag ?string)
   (assert (equal ?character-bag ''(#\ )))
@@ -386,7 +386,7 @@
 
 (def-macro string= (string1 string2 &key start1 end1 start2 end2)
   `(equals ,(nth-value 1 (build-string-expression string1 start1 end1))
-	   ,(nth-value 1 (build-string-expression string2 start2 end2))))
+           ,(nth-value 1 (build-string-expression string2 start2 end2))))
 
 (def-macro string-equal (string1 string2 &key start1 end1 start2 end2)
   `(equals-ignore-case
@@ -404,7 +404,7 @@
 ;;       (build-string-expression string1 start1 end1)
 ;;     (when (or (and start middle) (and middle end))
 ;;       (assert (atom string1))) ;;to avoid multiple evaluation
-;;     `(concat 
+;;     `(concat
 ;;       ,@(and start (list start))
 ;;       ,(nth-value 1 (build-string-expression string2 start2 `(max (length ,string1) ,(or end2 0))))
 ;;       ,@(and end (list end))))
@@ -417,11 +417,11 @@
 
 
 (def-transform statement
-  (setf (getf ?place ?indicator . ?ignore) ?value)
+    (setf (getf ?place ?indicator . ?ignore) ?value)
   (setf ?place (put-plist ?place ?indicator ?value)))
 
 (def-transform statement
-  (remf ?place ?indicator)
+    (remf ?place ?indicator)
   (setf ?place (rem-plist ?place ?indicator)))
 
 
@@ -429,22 +429,22 @@
 
 (def-linj-macro expression (substitute ?newitem/expression ?olditem/expression ?sequence/expression)
   (if (string-type-p (get-type ?sequence))
-    `(send ,?sequence replace ,?olditem ,?newitem)
-    (error "substitute not implemented yet")))
+      `(send ,?sequence replace ,?olditem ,?newitem)
+      (error "substitute not implemented yet")))
 
 (def-linj-macro expression (subseq ?sequence/expression ?start/expression &optional ?end/expression)
   (if (string-type-p (get-type ?sequence))
-    `(substring ,?sequence ,?start ,@(and ?end (list ?end)))
-    (error "subseq not implemented yet")))
+      `(substring ,?sequence ,?start ,@(and ?end (list ?end)))
+      (error "subseq not implemented yet")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def-macro qlet (expr binds &body body)
   `(if ,expr
-     (let ,(mapcar #'(lambda (bind)
-		       `(,(first bind)
-			 (future ,(second bind))))
-		   binds)
-       ,@body)
-     (let ,binds
-       ,@body)))
+       (let ,(mapcar #'(lambda (bind)
+                         `(,(first bind)
+                           (future ,(second bind))))
+              binds)
+         ,@body)
+       (let ,binds
+         ,@body)))

@@ -4,13 +4,13 @@
   ())
 
 (defconstant +eq-function+ (lambda (obj1 obj2)
-			     (eq obj1 obj2)))
+                             (eq obj1 obj2)))
 
 (defconstant +eql-function+ (lambda (obj1 obj2)
-			      (eql obj1 obj2)))
+                              (eql obj1 obj2)))
 
 (defconstant +equals-function+ (lambda (obj1 obj2)
-				 (equals obj1 obj2)))
+                                 (equals obj1 obj2)))
 
 (defmethod funcall (arg1 arg2)
   t)

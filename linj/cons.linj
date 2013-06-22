@@ -82,47 +82,47 @@
 
 (defmethod position (elem (list cons) &key (test #'eql) (key #'identity))
   (loop for e in list
-	and i upfrom 0
-	when (funcall test elem (funcall key e)) return i
-	finally return -1))
+        and i upfrom 0
+        when (funcall test elem (funcall key e)) return i
+        finally return -1))
 
 (defmethod nth (n/int (l cons))
   (loop for i from 1 below n
-	for l on l
-	finally return (first l)))
+        for l on l
+        finally return (first l)))
 
 (defmethod (setf nth) (value n/int (l cons))
   (setf (first (nthcdr (- n 1) l)) value))
 
 (defmethod iota (n/int this)
   (loop for i upfrom 0 to n
-	collect i))
+        collect i))
 
 (defmethod find (elem this &key (test #'eql) (key #'identity))
   (loop for e in this
-	when (funcall test elem (funcall key e)) return e
-	finally return null))
+        when (funcall test elem (funcall key e)) return e
+        finally return null))
 
 (defmethod find-if (pred/predicate this)
   (loop for e in this
-	when (funcall pred e) return e
-	finally return null))
+        when (funcall pred e) return e
+        finally return null))
 
 (defmethod position-if (pred/predicate this)
   (loop for e in this
-	and i upfrom 0
-	when (funcall pred e) return i
-	finally return -1))
+        and i upfrom 0
+        when (funcall pred e) return i
+        finally return -1))
 
 (defmethod member (elem (list cons) &key (test #'eq) (key #'identity))
   (loop for l on list
-	until (funcall test elem (funcall key (first l)))
-	finally return l))
+        until (funcall test elem (funcall key (first l)))
+        finally return l))
 
 (defmethod member-if (test/predicate (list cons) &key (key #'identity))
   (loop for l on list
-	until (funcall test (funcall key (first l)))
-	finally return l))
+        until (funcall test (funcall key (first l)))
+        finally return l))
 
 (defmethod append (this other/cons)
   (nconc (copy-list this) other))
@@ -136,38 +136,38 @@
 
 (defmethod mapcar (f/function this)
   (loop for e in this
-	collect (funcall f e)))
+        collect (funcall f e)))
 
 (defmethod mappend (f/function this)
   (loop for e in this
-	appending (the cons (funcall f e))))
+        appending (the cons (funcall f e))))
 
 (defmethod mapcan (f/function this)
   (loop for e in this
-	nconcing (the cons (funcall f e))))
+        nconcing (the cons (funcall f e))))
 
 (defmethod mapc (f/procedure this)
   (loop for e in this
-	do (funcall f e)))
+        do (funcall f e)))
 
 (defmethod mapc (f/function this)
   (loop for e in this
-	do (funcall f e)))
+        do (funcall f e)))
 
 (defmethod mapcar (f/function-2 this other/cons)
   (loop for e1 in this
-	and e2 in other
-	collect (funcall f e1 e2)))
+        and e2 in other
+        collect (funcall f e1 e2)))
 
 (defmethod mapc (f/procedure-2 this other/cons)
   (loop for e1 in this
-	and e2 in other
-	do (funcall f e1 e2)))
+        and e2 in other
+        do (funcall f e1 e2)))
 
 (defmethod mappend (f/function-2 this other/cons)
   (loop for e1 in this
-	and e2 in other
-	appending (funcall f e1 e2)))
+        and e2 in other
+        appending (funcall f e1 e2)))
 
 (defmethod remove-duplicates (this &key (test #'eq))
   (if (endp this)
@@ -175,34 +175,34 @@
     (if (member (first this) (rest this) :test test)
       (remove-duplicates (rest this) :test test)
       (cons (first this)
-	    (remove-duplicates (rest this) :test test)))))
+            (remove-duplicates (rest this) :test test)))))
 
 (defmethod remove (elem this &key (test #'eq) (key/function null) (count -1))
   (if (or (endp this) (= count 0))
     this
     (if (funcall test elem (if (eq key null)
-			     (first this)
-			     (funcall key (first this))))
+                             (first this)
+                             (funcall key (first this))))
       (remove elem (rest this) :test test :key key :count (1- count))
       (cons (first this)
-	    (remove elem (rest this) :test test :key key :count count)))))
+            (remove elem (rest this) :test test :key key :count count)))))
 
 (defmethod remove-if (test/predicate this)
   (loop for e in this
-	unless (funcall test e) collect e))
+        unless (funcall test e) collect e))
 
 (defmethod remove-if-not (test/predicate this)
   (loop for e in this
-	when (funcall test e) collect e))
+        when (funcall test e) collect e))
 
 (defmethod delete (elem this &key (test #'eq) (key/function null) (count -1))
   (cond ((or (endp this) (= count 0)) this)
-	((funcall test elem (if (eq key null)
-			      (first this)
-			      (funcall key (first this))))
-	 (delete elem (rest this) :test test :key key :count (1- count)))
-	(t (setf (cdr this) (delete elem (rest this) :test test :key key :count count))
-	   this)))
+        ((funcall test elem (if (eq key null)
+                              (first this)
+                              (funcall key (first this))))
+         (delete elem (rest this) :test test :key key :count (1- count)))
+        (t (setf (cdr this) (delete elem (rest this) :test test :key key :count count))
+           this)))
 
 (defmethod adjoin (elem (list cons) &key (test #'eq))
   (if (member elem list :test test)
@@ -211,8 +211,8 @@
 
 (defmethod reverse (this &optional (result '()))
   (loop for e in this
-	do (setq result (cons e result))
-	finally return result))
+        do (setq result (cons e result))
+        finally return result))
 
 (defmethod last ((list cons) &optional (n 1))
   (do ((checked-list (the object list) (cdr checked-list))
@@ -225,8 +225,8 @@
 (defmethod length-n-p (this n/int)
   (or (and (= n 0) (endp this))
       (and (not (= n 0))
-	   (not (endp this))
-	   (length-n-p (rest this) (1- n)))))
+           (not (endp this))
+           (length-n-p (rest this) (1- n)))))
 
 (defmethod nthcdr (n/int (list cons))
   (do ((i n (1- i))
@@ -237,7 +237,7 @@
   (if (length-n-p this n)
     '()
     (cons (first this)
-	  (butlast (rest this) n))))
+          (butlast (rest this) n))))
 
 (defmethod subseq (this &optional (start 0) (end (length this)))
   (butlast (nthcdr start this) (- (length this) end)))
@@ -262,38 +262,38 @@
       ((endp l1) this)
     (when (eq (car l1) indicator)
       (cond ((endp l2)
-	     (return (rest (rest this))))
-	    (t
-	     (setf (cdr (rest l2)) (cdr (rest l1)))
-	     (return this))))))
+             (return (rest (rest this))))
+            (t
+             (setf (cdr (rest l2)) (cdr (rest l1)))
+             (return this))))))
 
 (defmethod to-string (this)
   (let ((buf (new 'string-buffer "(")))
     (do* ((l (the object this) (cdr l))
-	  (first-time-p t nil))
-	((not (consp l))
-	 (if (eq l '())
-	   (append buf ")")
-	   (progn
-	     (append buf " . ")
-	     (append buf (elem-to-string this l))
-	     (append buf ")"))))
+          (first-time-p t nil))
+        ((not (consp l))
+         (if (eq l '())
+           (append buf ")")
+           (progn
+             (append buf " . ")
+             (append buf (elem-to-string this l))
+             (append buf ")"))))
       (unless first-time-p
-	(append buf " "))
+        (append buf " "))
       (append buf (elem-to-string this (car l))))
     (to-string buf)))
 
 (defmethod elem-to-string (this elem)
   (cond ((stringp elem)
-	 (format nil "\"~A\"" elem))
-	((typep elem 'Boolean)
-	 (if (boolean-value (the Boolean elem))
-	   "t"
-	   "nil"))
-	(elem
-	 (to-string elem))
-	(t
-	 "null")))
+         (format nil "\"~A\"" elem))
+        ((typep elem 'Boolean)
+         (if (boolean-value (the Boolean elem))
+           "t"
+           "nil"))
+        (elem
+         (to-string elem))
+        (t
+         "null")))
 
 ;;Extra utilities (I can't live without full Common Lisp)
 
@@ -314,7 +314,7 @@
     (if (eq pair null)
       (list)
       (the cons pair))))
-  
+
 (defmethod assoc-get (item this &key (default '()) (test #'eq))
   (let ((result (assoc item this :test test)))
     (if (eq result null)
@@ -323,39 +323,39 @@
 
 (defmethod every (pred/predicate this)
   (cond ((endp this) t)
-	((not (funcall pred (first this))) nil)
-	(t (every pred (rest this)))))
+        ((not (funcall pred (first this))) nil)
+        (t (every pred (rest this)))))
 
 (defmethod every (pred/predicate-2 this other/cons)
   (cond ((endp this) t)
-	((not (funcall pred (first this) (first other))) nil)
-	(t (every pred (rest this) (rest other)))))
+        ((not (funcall pred (first this) (first other))) nil)
+        (t (every pred (rest this) (rest other)))))
 
 (defmethod some (pred/predicate this)
   (cond ((endp this) nil)
-	((funcall pred (first this)) t)
-	(t (some pred (rest this)))))
+        ((funcall pred (first this)) t)
+        (t (some pred (rest this)))))
 
 (defmethod pairlist (this other/cons &optional (a-list (list)))
   (if (endp this)
     a-list
     (cons (list (first this) (first other))
-	  (pairlist (rest this) (rest other) a-list))))
+          (pairlist (rest this) (rest other) a-list))))
 
 (defmethod pairlis (this other/cons &optional (a-list (list)))
   (if (endp this)
     a-list
     (cons (cons (first this) (first other))
-	  (pairlis (rest this) (rest other) a-list))))
+          (pairlis (rest this) (rest other) a-list))))
 
 (defmethod copy-list (this)
   (if (endp this)
     this
     (cons (first this)
-	  ;;Must accept dotted lists
-	  (if (consp (cdr this))
-	    (copy-list (rest this))
-	    (cdr this)))))
+          ;;Must accept dotted lists
+          (if (consp (cdr this))
+            (copy-list (rest this))
+            (cdr this)))))
 
 (defmethod list-length (this)
   (do ((n 0 (+ n 2))
@@ -363,7 +363,7 @@
        (slow this (rest slow)))
       ((endp fast) n)
     (when (endp (cdr fast))
-      (return (+ n 1))) 
+      (return (+ n 1)))
     (when (and (eq fast slow) (> n 0))
       (return -1))))
 
@@ -371,24 +371,24 @@
   (if (listp other)
     (let ((other (the cons other)))
       (cond ((endp this) (endp other))
-	    ((not (endp this))
-	     (and (not (endp other))
-		  (let ((this-car (car this))
-			(this-cdr (cdr this))
-			(other-car (car other))
-			(other-cdr (cdr other)))
-		    (and (if (listp this-car)
-			   (equal (the cons this-car) other-car)
-			   (eql this-car other-car))
-			 (if (listp this-cdr)
-			   (equal (the cons this-cdr) other-cdr)
-			   (eql this-cdr other-cdr))))))
-	    (t nil)))
+            ((not (endp this))
+             (and (not (endp other))
+                  (let ((this-car (car this))
+                        (this-cdr (cdr this))
+                        (other-car (car other))
+                        (other-cdr (cdr other)))
+                    (and (if (listp this-car)
+                           (equal (the cons this-car) other-car)
+                           (eql this-car other-car))
+                         (if (listp this-cdr)
+                           (equal (the cons this-cdr) other-cdr)
+                           (eql this-cdr other-cdr))))))
+            (t nil)))
     nil))
 
 (defmethod reduce (comb/function-2 (list cons) &key initial-value)
   (if (endp list)
       initial-value
-      (funcall comb 
-	       (first list)
-	       (reduce comb (rest list) :initial-value initial-value))))
+      (funcall comb
+               (first list)
+               (reduce comb (rest list) :initial-value initial-value))))
